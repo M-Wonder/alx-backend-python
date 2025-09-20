@@ -2,7 +2,8 @@ import sqlite3
 
 # Class-based context manager for database connection
 class DatabaseConnection:
-    def __init__(self, db_name="airbnb.db"):
+    def __init__(self, db_name="alx-airbnb-database
+"):
         self.db_name = db_name
         self.conn = None
         self.cursor = None
