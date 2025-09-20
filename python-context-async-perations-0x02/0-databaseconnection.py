@@ -2,8 +2,7 @@ import sqlite3
 
 # Class-based context manager for database connection
 class DatabaseConnection:
-    def __init__(self, db_name="alx-airbnb-database
-"):
+    def __init__(self, db_name="alx-airbnb-database"):
         self.db_name = db_name
         self.conn = None
         self.cursor = None
@@ -24,19 +23,19 @@ class DatabaseConnection:
 # Example usage with the schema we made earlier
 if __name__ == "__main__":
     # Fetch all users from Users table
-    with DatabaseConnection("airbnb.db") as cursor:
+    with DatabaseConnection("alx-airbnb-database") as cursor:
         cursor.execute("SELECT id, name, email, age FROM Users")
         users = cursor.fetchall()
         print("[All Users]", users)
 
     # Fetch all properties
-    with DatabaseConnection("airbnb.db") as cursor:
+    with DatabaseConnection("alx-airbnb-database") as cursor:
         cursor.execute("SELECT id, name, location, price FROM Properties")
         properties = cursor.fetchall()
         print("[All Properties]", properties)
 
     # Fetch bookings with user info
-    with DatabaseConnection("airbnb.db") as cursor:
+    with DatabaseConnection("alx-airbnb-database") as cursor:
         cursor.execute("""
             SELECT b.id, u.name, p.name, b.start_date, b.end_date
             FROM Bookings b
