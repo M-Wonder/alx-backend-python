@@ -32,3 +32,5 @@ def batch_processing(batch_size):
     for user in stream_users_in_batches(batch_size):   # loop 1
         if user["age"] > 25:                          # filtering
             print(user)
+    return
+    
