@@ -1,0 +1,22 @@
+from django.contrib.auth.models import User
+from django.http import JsonResponse
+from django.views.decorators.http import require_http_methods
+from django.contrib.auth.decorators import login_required
+
+from django.db import transaction
+
+
+@require_http_methods(["DELETE"])
+@login_required
+def delete_user(request):
+    """
+    Allow a logged-in user to delete their account.
+    Triggers post_delete signal cleanup automatically.
+    """
+    user = request.user
+    username = user.username
+
+    with transaction.atomic():  # ensures all deletions occur safely
+        user.delete()
+
+    return JsonResponse({"message": f"User '{username}' and related data have been deleted successfully."})
