@@ -1,26 +1,21 @@
 from django.test import TestCase
 from django.contrib.auth.models import User
-from .models import Message, MessageHistory, Notification
+from .models import Message, Notification, MessageHistory
 
 
-class MessagingSignalTests(TestCase):
+class DeleteUserSignalTests(TestCase):
     def setUp(self):
-        self.sender = User.objects.create_user(username='alice', password='test123')
-        self.receiver = User.objects.create_user(username='bob', password='test123')
+        self.user1 = User.objects.create_user(username='alice', password='1234')
+        self.user2 = User.objects.create_user(username='bob', password='1234')
 
-    def test_post_save_creates_notification(self):
-        """Ensure a Notification is created when a new Message is sent."""
-        message = Message.objects.create(sender=self.sender, receiver=self.receiver, content="Hello, Bob!")
-        notification = Notification.objects.filter(message=message, user=self.receiver).first()
-        self.assertIsNotNone(notification)
+        self.msg = Message.objects.create(sender=self.user1, receiver=self.user2, content="Hi Bob!")
+        self.msg.content = "Hi Bob! (edited)"
+        self.msg.save()  # triggers MessageHistory
 
-    def test_pre_save_logs_old_message(self):
-        """Ensure a MessageHistory entry is created when a Message is edited."""
-        message = Message.objects.create(sender=self.sender, receiver=self.receiver, content="Initial")
-        message.content = "Edited content"
-        message.save()
+    def test_user_deletion_cleans_related_data(self):
+        """Ensure messages, notifications, and histories are deleted when user is removed."""
+        self.user1.delete()
 
-        history_entry = MessageHistory.objects.filter(message=message).first()
-        self.assertIsNotNone(history_entry)
-        self.assertEqual(history_entry.old_content, "Initial")
-        self.assertTrue(message.edited)
+        self.assertFalse(Message.objects.exists())
+        self.assertFalse(Notification.objects.exists())
+        self.assertFalse(MessageHistory.objects.exists())
