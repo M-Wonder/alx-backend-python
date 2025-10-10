@@ -1,25 +1,22 @@
-# Use official Python 3.10 image as base
+# Use an official Python runtime as the base image
 FROM python:3.10
 
-# Set environment variables
+# Set environment variables to prevent Python from buffering output
 ENV PYTHONDONTWRITEBYTECODE 1
 ENV PYTHONUNBUFFERED 1
 
-# Set working directory inside container
+# Set the working directory inside the container
 WORKDIR /app
 
-# Copy dependencies file
+# Copy the requirements file and install dependencies
 COPY requirements.txt /app/
+RUN pip install --no-cache-dir -r requirements.txt
 
-# Install dependencies
-RUN pip install --upgrade pip
-RUN pip install -r requirements.txt
-
-# Copy the entire Django project
+# Copy the rest of your Django project into the container
 COPY . /app/
 
-# Expose Django default port
+# Expose the port your Django app runs on (default: 8000)
 EXPOSE 8000
 
-# Command to run the Django app
-CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
+# Run the Django development server (binding to all network interfaces)
+CMD ["python", "manage.py", "runserver", "0.0.0.0:8000", "-p", "8000"]
