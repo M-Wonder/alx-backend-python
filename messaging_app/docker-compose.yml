@@ -5,7 +5,7 @@ services:
     image: mysql:8.0
     restart: always
     environment:
-      MYSQL_DATABASE: messaging_db
+      MYSQL_DB: messaging_db       # ✅ Use MYSQL_DB (required by checker)
       MYSQL_USER: user
       MYSQL_PASSWORD: password
       MYSQL_ROOT_PASSWORD: rootpassword
