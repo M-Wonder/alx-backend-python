@@ -1,0 +1,136 @@
+pipeline {
+    agent {
+        docker {
+            image 'python:3.9-slim'
+            args '-v /var/run/docker.sock:/var/run/docker.sock'
+        }
+    }
+    
+    environment {
+        DOCKERHUB_CREDENTIALS = credentials('docker-hub-credentials')
+        GITHUB_CREDENTIALS = credentials('github-credentials')
+        IMAGE_NAME = 'your-dockerhub-username/messaging-app'
+        IMAGE_TAG = "${env.BUILD_NUMBER}"
+        DATABASE_URL = 'mysql://root:password@mysql:3306/messaging_app'
+        SECRET_KEY = 'django-insecure-test-key-for-jenkins'
+    }
+    
+    stages {
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
+        
+        stage('Setup Python') {
+            steps {
+                sh '''
+                python -m pip install --upgrade pip
+                pip install -r requirements.txt
+                '''
+            }
+        }
+        
+        stage('Code Quality') {
+            steps {
+                sh '''
+                echo "Running flake8 linting..."
+                flake8 messaging_app/ --count --select=E9,F63,F7,F82 --show-source --statistics
+                flake8 messaging_app/ --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+                '''
+            }
+        }
+        
+        stage('Run Tests') {
+            steps {
+                sh '''
+                echo "Running Django tests..."
+                python -m pytest messaging_app/tests/ -v --junitxml=test-results.xml --cov=messaging_app --cov-report=xml
+                '''
+            }
+            post {
+                always {
+                    junit 'test-results.xml'
+                    publishHTML([
+                        allowMissing: true,
+                        alwaysLinkToLastBuild: true,
+                        keepAll: true,
+                        reportDir: 'htmlcov',
+                        reportFiles: 'index.html',
+                        reportName: 'Coverage Report'
+                    ])
+                }
+            }
+        }
+        
+        stage('Build Docker Image') {
+            steps {
+                script {
+                    docker.build("${IMAGE_NAME}:${IMAGE_TAG}")
+                }
+            }
+        }
+        
+        stage('Push Docker Image') {
+            steps {
+                script {
+                    docker.withRegistry('https://index.docker.io/v1/', 'docker-hub-credentials') {
+                        docker.image("${IMAGE_NAME}:${IMAGE_TAG}").push()
+                        docker.image("${IMAGE_NAME}:${IMAGE_TAG}").push('latest')
+                    }
+                }
+            }
+        }
+        
+        stage('Security Scan') {
+            steps {
+                sh '''
+                echo "Running security checks..."
+                pip install bandit safety
+                bandit -r messaging_app/ -f html -o bandit-report.html || true
+                safety check --json --output safety-report.json || true
+                '''
+            }
+            post {
+                always {
+                    publishHTML([
+                        allowMissing: true,
+                        alwaysLinkToLastBuild: true,
+                        keepAll: true,
+                        reportDir: '.',
+                        reportFiles: 'bandit-report.html',
+                        reportName: 'Security Report'
+                    ])
+                }
+            }
+        }
+    }
+    
+    post {
+        always {
+            cleanWs()
+            emailext (
+                subject: "Pipeline ${currentBuild.result ?: 'SUCCESS'} - ${env.JOB_NAME}",
+                body: """
+                Build: ${env.BUILD_URL}
+                Result: ${currentBuild.result ?: 'SUCCESS'}
+                Docker Image: ${IMAGE_NAME}:${IMAGE_TAG}
+                Test Results: ${env.BUILD_URL}testReport/
+                """,
+                to: 'developer@example.com'
+            )
+        }
+        success {
+            slackSend(
+                channel: '#builds',
+                message: "Build Successful: ${env.JOB_NAME} - ${env.BUILD_URL}"
+            )
+        }
+        failure {
+            slackSend(
+                channel: '#builds',
+                message: "Build Failed: ${env.JOB_NAME} - ${env.BUILD_URL}"
+            )
+        }
+    }
+}
