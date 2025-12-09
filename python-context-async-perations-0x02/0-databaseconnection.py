@@ -2,45 +2,37 @@ import sqlite3
 
 # Class-based context manager for database connection
 class DatabaseConnection:
-    def __init__(self, db_name="alx-airbnb-database"):
+    def __init__(self, db_name):
         self.db_name = db_name
         self.conn = None
         self.cursor = None
-
+    
     def __enter__(self):
+        """Open database connection and return cursor"""
         self.conn = sqlite3.connect(self.db_name)
         self.cursor = self.conn.cursor()
-        return self.cursor  # return cursor for queries
-
+        return self.cursor
+    
     def __exit__(self, exc_type, exc_val, exc_tb):
+        """Close database connection and handle exceptions"""
         if exc_type is not None:
-            print(f"Error: {exc_val}, rolling back changes.")
+            # If an exception occurred, rollback changes
             self.conn.rollback()
         else:
+            # If no exception, commit changes
             self.conn.commit()
+        
+        # Always close the connection
         self.conn.close()
+        
+        # Return False to propagate exceptions (if any)
+        return False
 
-# Example usage with the schema we made earlier
+
+# Example usage with the context manager
 if __name__ == "__main__":
-    # Fetch all users from Users table
-    with DatabaseConnection("alx-airbnb-database") as cursor:
-        cursor.execute("SELECT id, name, email, age FROM Users")
-        users = cursor.fetchall()
-        print("[All Users]", users)
-
-    # Fetch all properties
-    with DatabaseConnection("alx-airbnb-database") as cursor:
-        cursor.execute("SELECT id, name, location, price FROM Properties")
-        properties = cursor.fetchall()
-        print("[All Properties]", properties)
-
-    # Fetch bookings with user info
-    with DatabaseConnection("alx-airbnb-database") as cursor:
-        cursor.execute("""
-            SELECT b.id, u.name, p.name, b.start_date, b.end_date
-            FROM Bookings b
-            JOIN Users u ON b.user_id = u.id
-            JOIN Properties p ON b.property_id = p.id
-        """)
-        bookings = cursor.fetchall()
-        print("[Bookings with Users + Properties]", bookings)
+    # Use the context manager to query the database
+    with DatabaseConnection("users.db") as cursor:
+        cursor.execute("SELECT * FROM users")
+        results = cursor.fetchall()
+        print(results)
