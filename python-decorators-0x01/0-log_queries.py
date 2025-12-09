@@ -3,21 +3,26 @@ import functools
 
 # decorator to log SQL queries
 def log_queries(func):
+    """Decorator that logs SQL queries before executing them"""
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
-        # look for the 'query' argument (positional or keyword)
-        query = None
-        if "query" in kwargs:
-            query = kwargs["query"]
-        elif len(args) > 0:
+        # Extract the query parameter
+        # Check if 'query' is in kwargs first
+        if 'query' in kwargs:
+            query = kwargs['query']
+        # Otherwise, assume it's the first positional argument
+        elif args:
             query = args[0]
-        
-        if query:
-            print(f"[LOG] Executing SQL Query: {query}")
         else:
-            print("[LOG] Executing function without explicit query")
+            query = None
         
+        # Log the query if found
+        if query:
+            print(f"Executing query: {query}")
+        
+        # Execute the original function
         return func(*args, **kwargs)
+    
     return wrapper
 
 
@@ -34,4 +39,3 @@ def fetch_all_users(query):
 # fetch users while logging the query
 users = fetch_all_users(query="SELECT * FROM users")
 print(users)
-
