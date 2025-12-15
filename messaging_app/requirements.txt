@@ -1,26 +1,4 @@
-# Core Framework
-Django==5.0.3
-
-# Django REST Framework for building APIs
-djangorestframework==3.15.1
-
-# JWT Authentication
-djangorestframework-simplejwt==5.3.1
-
-# Django Filters for query filtering
-django-filter==24.2
-
-# MySQL Database driver
-mysqlclient==2.2.4
-
-# Caching and performance
-django-redis==5.4.0
-
-# Swagger / API Documentation
-drf-yasg==1.21.7
-
-# For managing environment variables
-python-dotenv==1.0.1
-
-# Optional but good to have
-Pillow==10.2.0
+asgiref==3.11.0
+Django==6.0
+djangorestframework==3.16.1
+sqlparse==0.5.4
