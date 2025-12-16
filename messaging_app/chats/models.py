@@ -7,6 +7,7 @@ class User(AbstractUser):
     """Extended User model with additional fields"""
     user_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False, db_index=True)
     email = models.EmailField(unique=True, null=False)
+    password = models.CharField(max_length=128)  # Inherited from AbstractUser, explicitly defined
     phone_number = models.CharField(max_length=20, null=True, blank=True)
     
     ROLE_CHOICES = [
@@ -71,4 +72,3 @@ class Message(models.Model):
     
     def __str__(self):
         return f"Message from {self.sender.email} at {self.sent_at}"
-
